@@ -6,10 +6,12 @@ from . import views
 urlpatterns = [
     
     path('', views.index),
-    path('products', views.products),
-    path('addproduct', views.addproduct),
-    path('delproduct/<int:id>',views.delproduct),
-    path('login/', TokenObtainPairView.as_view()),
+    
+    path('products', views.ProductsView.as_view()),
+    path('products/<int:pk>', views.ProductsView.as_view()),
+    # path('addproduct', views.addproduct),
+    # path('delproduct/<int:id>',views.delproduct),
+    path('login', TokenObtainPairView.as_view()),
     path('members', views.members),
     path('register', views.register),
     

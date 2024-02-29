@@ -7,6 +7,9 @@ from rest_framework import serializers
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import api_view, permission_classes
 from django.contrib.auth.models import User
+from rest_framework.views import APIView
+from rest_framework import status
+
 @api_view(['GET'])
 def index(req):
     return Response({'msg':'hello'})
@@ -18,12 +21,6 @@ def members(req):
     return Response('members only- yaya')
 
 
-
-
-class ProductSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Product
-        fields = '__all__'
 
 @api_view(['POST'])
 def register(request):
@@ -37,26 +34,50 @@ def register(request):
     user.save()
     return Response("new user born")
 
+class ProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = '__all__'
+    def create(self, validated_data):
+        user = self.context['user']
+        print(user)
+        return Product.objects.create(**validated_data,user=user)
 
-@api_view(['GET'])
+
 @permission_classes([IsAuthenticated])
-def products(req):
-    user= req.user
-    pro_product = user.product_set.all()
-    # pro_product=Product.objects.all()
-    return Response (ProductSerializer(pro_product,many=True).data)
+class ProductsView(APIView):
+    def get(self, request):
+        user=request.user
+        # print( request.user)
+        # my_model = Product.objects.all()
+        my_model = user.product_set.all()
+        serializer = ProductSerializer(my_model, many=True)
+        return Response(serializer.data)
+    
+    def post(self, request,pk=None):
+        # usr =request.user
+        # print(usr)
+        serializer = ProductSerializer(data=request.data, context={'user': request.user})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+   
+    def put(self, request,pk=-1):
+        my_model = Product.objects.get(pk=pk)
+        serializer = ProductSerializer(my_model, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+   
+    def delete(self, request, pk=-1):
+        print(pk)
+        my_model = Product.objects.get(pk=pk)
+        my_model.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
-@api_view(['POST'])
-def addproduct(req):
-    pro_product = ProductSerializer(data=req.data)
-    if pro_product.is_valid():
-        pro_product.save()
-        return Response ("post...")
 
-@api_view(['DELETE'])
-def delproduct(req,id=-1):
-    pro_product=Product.objects.get(id=id)
-    pro_product.delete()
-    return Response ("del...")
+
 
 
