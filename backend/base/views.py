@@ -38,26 +38,27 @@ class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = '__all__'
-    def create(self, validated_data):
-        user = self.context['user']
-        print(user)
-        return Product.objects.create(**validated_data,user=user)
+    # def create(self, validated_data):
+    #     user = self.context['user']
+    #     print(user)
+    #     return Product.objects.create(**validated_data,user=user)
 
 
-@permission_classes([IsAuthenticated])
+# @permission_classes([IsAuthenticated])
 class ProductsView(APIView):
     def get(self, request):
         user=request.user
         # print( request.user)
-        # my_model = Product.objects.all()
-        my_model = user.product_set.all()
+        my_model = Product.objects.all()
+        # my_model = user.product_set.all()
         serializer = ProductSerializer(my_model, many=True)
         return Response(serializer.data)
     
     def post(self, request,pk=None):
         # usr =request.user
         # print(usr)
-        serializer = ProductSerializer(data=request.data, context={'user': request.user})
+        print(request.data)
+        serializer = ProductSerializer(data=request.data)#, context={'user': request.user})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
